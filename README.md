@@ -1,2 +1,2 @@
-# blockserver
-数字版权验证系统服务模块
+# blockchain
+数字版权验证系统的区块链模块

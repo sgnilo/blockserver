@@ -70,6 +70,30 @@ const home = (req, res) => {
     res.send('这是主页');
 };
 
+const login = (req, res) => {
+    const {name, psd} = req.query;
+    if (name && psd) {
+        db.command(`SELECT * from usertbl WHERE user_name = "${name}"`, (err, rows) => {
+            if (!err) {
+                if (rows && rows[0]){
+                    if (rows[0].user_name === name && rows[0].user_psd === sha(psd)) {
+                        makeToken(req, res, name);
+                        res.send(JSON.stringify(result('登陆成功')));
+                    } else {
+                        res.send(JSON.stringify(result('用户名或密码错误！', 4)))
+                    }
+                } else {
+                    res.send(JSON.stringify(result('不存在该用户！', 6)))
+                }
+            } else {
+                res.send(JSON.stringify(result('登陆失败！', 5)));
+            }
+        });
+    } else {
+        res.send(JSON.stringify(result('名称或密码未完善！', 1)));
+    }
+};
+
 const url = {};
 
 url['/register'] = {
@@ -82,6 +106,12 @@ url['/'] = {
     method: 'get',
     inWhiteList: true,
     callback: home
+}
+
+url['/login'] = {
+    method: 'get',
+    inWhiteList: true,
+    callback: login
 }
 
 module.exports = {

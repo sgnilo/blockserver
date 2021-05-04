@@ -1,12 +1,17 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
 const process = require('./process');
+const bodyParser = require('body-parser');
 
 
 const app = express();
 const port = 3000;
 
 app.use(cookieParser());
+app.use(cors());
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
 
 for (let url in process.url) {
     if (process.url.hasOwnProperty(url)) {

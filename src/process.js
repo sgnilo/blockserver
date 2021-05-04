@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const key = crypto.scryptSync('sgnilo', 'xjp142065', 24);
 const iv = crypto.randomBytes(16);
 
-const result = (errMsg, errno = 0) => ({errMsg, errno});
+const result = (errMsg, errno = 0, data) => ({errMsg, errno, ...{data}});
 
 const encrypt = data => {
     const cipher = crypto.createCipheriv('aes-192-cbc', key, iv);
@@ -40,7 +40,7 @@ const makeToken = (req, res, name) => {
 
 
 const register = (req, res) => {
-    const {name, psd} = req.query;
+    const {name, psd} = req.body;
     if (name && psd) {
         db.command(`SELECT * from usertbl WHERE user_name = "${name}"`, (err, rows) => {
             if (!err) {
@@ -50,7 +50,7 @@ const register = (req, res) => {
                     db.command(`INSERT INTO usertbl (user_name, user_psd, product_list) VALUES ("${name}", "${sha(psd)}", "[]");`, (err, rows, fields) => {
                         if (!err) {
                             makeToken(req, res, name);
-                            res.send(JSON.stringify(result('注册成功！')));
+                            res.send(JSON.stringify(result('注册成功！', 0, {username: name})));
                         } else {
                             res.send(JSON.stringify(result('注册失败！', 1)));
                         }
@@ -71,14 +71,14 @@ const home = (req, res) => {
 };
 
 const login = (req, res) => {
-    const {name, psd} = req.query;
+    const {name, psd} = req.body;
     if (name && psd) {
         db.command(`SELECT * from usertbl WHERE user_name = "${name}"`, (err, rows) => {
             if (!err) {
                 if (rows && rows[0]){
                     if (rows[0].user_name === name && rows[0].user_psd === sha(psd)) {
                         makeToken(req, res, name);
-                        res.send(JSON.stringify(result('登陆成功')));
+                        res.send(JSON.stringify(result('登陆成功', 0, {username: name})));
                     } else {
                         res.send(JSON.stringify(result('用户名或密码错误！', 4)))
                     }
@@ -97,7 +97,7 @@ const login = (req, res) => {
 const url = {};
 
 url['/register'] = {
-    method: 'get',
+    method: 'post',
     inWhiteList: true,
     callback: register
 };
@@ -109,7 +109,7 @@ url['/'] = {
 }
 
 url['/login'] = {
-    method: 'get',
+    method: 'post',
     inWhiteList: true,
     callback: login
 }
